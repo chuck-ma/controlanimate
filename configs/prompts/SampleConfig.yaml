@@ -53,7 +53,7 @@ motion_module: "models/Motion_Module/mm_sd_v15_v2.ckpt"
 
 # Optional ControlNet Models to be used - will be downloaded automatically
 controlnets:
-  - lllyasviel/control_v11p_sd15_openpose
+  # - lllyasviel/control_v11p_sd15_openpose
   # - lllyasviel/control_v11p_sd15_lineart
   # - lllyasviel/control_v11p_sd15_mlsd
   # - lllyasviel/sd-controlnet-canny
@@ -64,8 +64,8 @@ controlnets:
   # - lllyasviel/sd-controlnet-hed
 
 cond_scale: 
+  # - 1.0
   - 1.0
-  - 0.5
   # - 1.0
   # - 0.4
 
