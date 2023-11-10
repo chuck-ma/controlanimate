@@ -98,4 +98,4 @@ crf: 23 # A measure of quality - lower is better
 # ADDITIONAL
 ######################################################
 
-ffmpeg_path: "/usr/bin/ffmpeg"
+ffmpeg_path: "/root/miniconda3/envs/cuda11_8_env/bin/ffmpeg"
