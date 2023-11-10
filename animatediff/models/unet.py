@@ -570,7 +570,7 @@ class UNet3DConditionModel(ModelMixin, ConfigMixin):
     def from_pretrained_2d(
         cls,
         pretrained_model_path,
-        use_safetensors=False,
+        use_safetensors=True,
         subfolder=None,
         unet_additional_kwargs=None,
     ):
