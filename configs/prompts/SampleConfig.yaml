@@ -15,7 +15,7 @@ save_frames: 1 # 0: No, 1: Yes
 width: 512
 height: 512
 
-prompt: "A man with perfect++ face++ , (perfect face)++, (perfect eyes)++ fully dressed, (sharp features)+, (intense eyes)+,  sumptuous artwork, breath of the wild, masterpiece, best quality, sharp focus, dramatic lighting, 8k, uhd, dslr, vivid color, matte painting ,  high quality"
+prompt: "A man with perfect++ face++ , (perfect face)++, (perfect eyes)++ fully dressed, (sharp features)+, (intense eyes)+,  sumptuous artwork, breath of the wild, masterpiece, best quality, sharp focus, dramatic lighting, 8k, uhd, dslr,  high quality"
 n_prompt: "easynegative+, nudity, tint, blue tint, blue, mask++, (bad face)+++, (worst quality)+, (low quality)+, lowres, bad anatomy, (monochrome)++, (grayscale)+, (text, font, logo, copyright, watermark)++, wrong face, wrong hands, wrong legs, wrong feet, (nsfw,nude)+"
 
 # Additional Basic Parameters
