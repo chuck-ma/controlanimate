@@ -33,7 +33,7 @@ use_lcm: 0 # 0: No, 1: Yes - If used most of the settings related to LoRA, Dream
 ######################################################
 
 # Base model that AnimateDiff uses to create the initial architecture from (it needs to be in HuggingFace format (.bin))
-pretrained_model_path: "models/StableDiffusion/stable-diffusion-v1-5"
+pretrained_model_path: "models/StableDiffusion/Yntec/mistoonAnime2"
 
 # Optional Alternative AutoEncoder (VAE)
 vae_path: "models/VAE/vae-ft-mse-840000-ema-pruned.ckpt" #"models/VAE/vae-ft-ema-560000-ema-pruned.safetensors"
