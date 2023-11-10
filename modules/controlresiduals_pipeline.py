@@ -82,8 +82,10 @@ class MultiControlNetResidualsPipeline:
         self.pidi_processor = PidiNetDetector.from_pretrained(
             "lllyasviel/Annotators", cache_dir=cache_dir
         )
+
+        # https://huggingface.co/Intel/dpt-large
         self.depth_estimate_processor = pipeline(
-            "depth-estimation", cache_dir=cache_dir
+            "depth-estimation", cache_dir=cache_dir, , model="Intel/dpt-hybrid-midas"
         )
 
         date_time = datetime.datetime.now()
