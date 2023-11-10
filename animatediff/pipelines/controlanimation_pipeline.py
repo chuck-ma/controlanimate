@@ -23,7 +23,7 @@ from diffusers.schedulers import (
     EulerDiscreteScheduler,
     LMSDiscreteScheduler,
     PNDMScheduler,
-    UniPCMultistepScheduler
+    UniPCMultistepScheduler,
 )
 from diffusers.utils import BaseOutput
 
@@ -47,7 +47,11 @@ from modules.controlresiduals_pipeline import MultiControlNetResidualsPipeline
 
 from diffusers.image_processor import VaeImageProcessor
 
-from diffusers.loaders import FromSingleFileMixin, LoraLoaderMixin, TextualInversionLoaderMixin
+from diffusers.loaders import (
+    FromSingleFileMixin,
+    LoraLoaderMixin,
+    TextualInversionLoaderMixin,
+)
 
 from diffusers.models.lora import adjust_lora_scale_text_encoder
 
@@ -69,7 +73,10 @@ class AnimationPipelineOutput(BaseOutput):
     videos: Union[torch.Tensor, np.ndarray]
 
 
-class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,):
+class ControlAnimationPipeline(
+    DiffusionPipeline,
+    TextualInversionLoaderMixin,
+):
     _optional_components = []
 
     def __init__(
@@ -86,7 +93,7 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             EulerAncestralDiscreteScheduler,
             DPMSolverMultistepScheduler,
             UniPCMultistepScheduler,
-            None # LCM
+            None,  # LCM
         ],
     ):
         super().__init__()
@@ -95,11 +102,17 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             scheduler
             if scheduler is not None
             else LCMScheduler(
-                beta_start=0.00085, beta_end=0.0120, beta_schedule="scaled_linear", prediction_type="epsilon"
+                beta_start=0.00085,
+                beta_end=0.0120,
+                beta_schedule="scaled_linear",
+                prediction_type="epsilon",
             )
         )
 
-        if hasattr(scheduler.config, "steps_offset") and scheduler.config.steps_offset != 1:
+        if (
+            hasattr(scheduler.config, "steps_offset")
+            and scheduler.config.steps_offset != 1
+        ):
             deprecation_message = (
                 f"The configuration file of this scheduler: {scheduler} is outdated. `steps_offset`"
                 f" should be set to 1 instead of {scheduler.config.steps_offset}. Please make sure "
@@ -108,12 +121,17 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                 " it would be very nice if you could open a Pull request for the `scheduler/scheduler_config.json`"
                 " file"
             )
-            deprecate("steps_offset!=1", "1.0.0", deprecation_message, standard_warn=False)
+            deprecate(
+                "steps_offset!=1", "1.0.0", deprecation_message, standard_warn=False
+            )
             new_config = dict(scheduler.config)
             new_config["steps_offset"] = 1
             scheduler._internal_dict = FrozenDict(new_config)
 
-        if hasattr(scheduler.config, "clip_sample") and scheduler.config.clip_sample is True:
+        if (
+            hasattr(scheduler.config, "clip_sample")
+            and scheduler.config.clip_sample is True
+        ):
             deprecation_message = (
                 f"The configuration file of this scheduler: {scheduler} has not set the configuration `clip_sample`."
                 " `clip_sample` should be set to False in the configuration file. Please make sure to update the"
@@ -121,15 +139,23 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                 " future versions. If you have downloaded this checkpoint from the Hugging Face Hub, it would be very"
                 " nice if you could open a Pull request for the `scheduler/scheduler_config.json` file"
             )
-            deprecate("clip_sample not set", "1.0.0", deprecation_message, standard_warn=False)
+            deprecate(
+                "clip_sample not set", "1.0.0", deprecation_message, standard_warn=False
+            )
             new_config = dict(scheduler.config)
             new_config["clip_sample"] = False
             scheduler._internal_dict = FrozenDict(new_config)
 
-        is_unet_version_less_0_9_0 = hasattr(unet.config, "_diffusers_version") and version.parse(
+        is_unet_version_less_0_9_0 = hasattr(
+            unet.config, "_diffusers_version"
+        ) and version.parse(
             version.parse(unet.config._diffusers_version).base_version
-        ) < version.parse("0.9.0.dev0")
-        is_unet_sample_size_less_64 = hasattr(unet.config, "sample_size") and unet.config.sample_size < 64
+        ) < version.parse(
+            "0.9.0.dev0"
+        )
+        is_unet_sample_size_less_64 = (
+            hasattr(unet.config, "sample_size") and unet.config.sample_size < 64
+        )
         if is_unet_version_less_0_9_0 and is_unet_sample_size_less_64:
             deprecation_message = (
                 "The configuration file of the unet has set the default `sample_size` to smaller than"
@@ -142,7 +168,9 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                 " checkpoint from the Hugging Face Hub, it would be very nice if you could open a Pull request for"
                 " the `unet/config.json` file"
             )
-            deprecate("sample_size<64", "1.0.0", deprecation_message, standard_warn=False)
+            deprecate(
+                "sample_size<64", "1.0.0", deprecation_message, standard_warn=False
+            )
             new_config = dict(unet.config)
             new_config["sample_size"] = 64
             unet._internal_dict = FrozenDict(new_config)
@@ -156,9 +184,13 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         )
         self.vae_scale_factor = 2 ** (len(self.vae.config.block_out_channels) - 1)
 
-        self.image_processor = VaeImageProcessor(vae_scale_factor=self.vae_scale_factor, do_convert_rgb=True)
+        self.image_processor = VaeImageProcessor(
+            vae_scale_factor=self.vae_scale_factor, do_convert_rgb=True
+        )
         self.control_image_processor = VaeImageProcessor(
-            vae_scale_factor=self.vae_scale_factor, do_convert_rgb=True, do_normalize=False
+            vae_scale_factor=self.vae_scale_factor,
+            do_convert_rgb=True,
+            do_normalize=False,
         )
 
         self.latents = None
@@ -176,7 +208,7 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
     def enable_sequential_cpu_offload(self, gpu_id=0):
         if is_accelerate_available():
             from accelerate import cpu_offload
-        else:      
+        else:
             raise ImportError("Please install accelerate via `pip install accelerate`")
 
         device = torch.device(f"cuda:{gpu_id}")
@@ -184,7 +216,6 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         for cpu_offloaded_model in [self.unet, self.text_encoder, self.vae]:
             if cpu_offloaded_model is not None:
                 cpu_offload(cpu_offloaded_model, device)
-
 
     @property
     def _execution_device(self):
@@ -199,7 +230,14 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                 return torch.device(module._hf_hook.execution_device)
         return self.device
 
-    def _encode_prompt(self, prompt, device, num_videos_per_prompt, do_classifier_free_guidance, negative_prompt):
+    def _encode_prompt(
+        self,
+        prompt,
+        device,
+        num_videos_per_prompt,
+        do_classifier_free_guidance,
+        negative_prompt,
+    ):
         batch_size = len(prompt) if isinstance(prompt, list) else 1
 
         text_inputs = self.tokenizer(
@@ -210,16 +248,25 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             return_tensors="pt",
         )
         text_input_ids = text_inputs.input_ids
-        untruncated_ids = self.tokenizer(prompt, padding="longest", return_tensors="pt").input_ids
+        untruncated_ids = self.tokenizer(
+            prompt, padding="longest", return_tensors="pt"
+        ).input_ids
 
-        if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(text_input_ids, untruncated_ids):
-            removed_text = self.tokenizer.batch_decode(untruncated_ids[:, self.tokenizer.model_max_length - 1 : -1])
+        if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
+            text_input_ids, untruncated_ids
+        ):
+            removed_text = self.tokenizer.batch_decode(
+                untruncated_ids[:, self.tokenizer.model_max_length - 1 : -1]
+            )
             logger.warning(
                 "The following part of your input was truncated because CLIP can only handle sequences up to"
                 f" {self.tokenizer.model_max_length} tokens: {removed_text}"
             )
 
-        if hasattr(self.text_encoder.config, "use_attention_mask") and self.text_encoder.config.use_attention_mask:
+        if (
+            hasattr(self.text_encoder.config, "use_attention_mask")
+            and self.text_encoder.config.use_attention_mask
+        ):
             attention_mask = text_inputs.attention_mask.to(device)
         else:
             attention_mask = None
@@ -233,7 +280,9 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         # duplicate text embeddings for each generation per prompt, using mps friendly method
         bs_embed, seq_len, _ = text_embeddings.shape
         text_embeddings = text_embeddings.repeat(1, num_videos_per_prompt, 1)
-        text_embeddings = text_embeddings.view(bs_embed * num_videos_per_prompt, seq_len, -1)
+        text_embeddings = text_embeddings.view(
+            bs_embed * num_videos_per_prompt, seq_len, -1
+        )
 
         # get unconditional embeddings for classifier free guidance
         if do_classifier_free_guidance:
@@ -265,7 +314,10 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                 return_tensors="pt",
             )
 
-            if hasattr(self.text_encoder.config, "use_attention_mask") and self.text_encoder.config.use_attention_mask:
+            if (
+                hasattr(self.text_encoder.config, "use_attention_mask")
+                and self.text_encoder.config.use_attention_mask
+            ):
                 attention_mask = uncond_input.attention_mask.to(device)
             else:
                 attention_mask = None
@@ -279,7 +331,9 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             # duplicate unconditional embeddings for each generation per prompt, using mps friendly method
             seq_len = uncond_embeddings.shape[1]
             uncond_embeddings = uncond_embeddings.repeat(1, num_videos_per_prompt, 1)
-            uncond_embeddings = uncond_embeddings.view(batch_size * num_videos_per_prompt, seq_len, -1)
+            uncond_embeddings = uncond_embeddings.view(
+                batch_size * num_videos_per_prompt, seq_len, -1
+            )
 
             # For classifier free guidance, we need to do two forward passes.
             # Here we concatenate the unconditional and text embeddings into a single batch
@@ -287,7 +341,6 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             text_embeddings = torch.cat([uncond_embeddings, text_embeddings])
 
         return text_embeddings
-
 
     def encode_prompt(
         self,
@@ -361,11 +414,13 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                 return_tensors="pt",
             )
             text_input_ids = text_inputs.input_ids
-            untruncated_ids = self.tokenizer(prompt, padding="longest", return_tensors="pt").input_ids
+            untruncated_ids = self.tokenizer(
+                prompt, padding="longest", return_tensors="pt"
+            ).input_ids
 
-            if untruncated_ids.shape[-1] >= text_input_ids.shape[-1] and not torch.equal(
-                text_input_ids, untruncated_ids
-            ):
+            if untruncated_ids.shape[-1] >= text_input_ids.shape[
+                -1
+            ] and not torch.equal(text_input_ids, untruncated_ids):
                 removed_text = self.tokenizer.batch_decode(
                     untruncated_ids[:, self.tokenizer.model_max_length - 1 : -1]
                 )
@@ -374,17 +429,24 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                     f" {self.tokenizer.model_max_length} tokens: {removed_text}"
                 )
 
-            if hasattr(self.text_encoder.config, "use_attention_mask") and self.text_encoder.config.use_attention_mask:
+            if (
+                hasattr(self.text_encoder.config, "use_attention_mask")
+                and self.text_encoder.config.use_attention_mask
+            ):
                 attention_mask = text_inputs.attention_mask.to(device)
             else:
                 attention_mask = None
 
             if clip_skip is None:
-                prompt_embeds = self.text_encoder(text_input_ids.to(device), attention_mask=attention_mask)
+                prompt_embeds = self.text_encoder(
+                    text_input_ids.to(device), attention_mask=attention_mask
+                )
                 prompt_embeds = prompt_embeds[0]
             else:
                 prompt_embeds = self.text_encoder(
-                    text_input_ids.to(device), attention_mask=attention_mask, output_hidden_states=True
+                    text_input_ids.to(device),
+                    attention_mask=attention_mask,
+                    output_hidden_states=True,
                 )
                 # Access the `hidden_states` first, that contains a tuple of
                 # all the hidden states from the encoder layers. Then index into
@@ -394,7 +456,9 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                 # representations. The `last_hidden_states` that we typically use for
                 # obtaining the final prompt representations passes through the LayerNorm
                 # layer.
-                prompt_embeds = self.text_encoder.text_model.final_layer_norm(prompt_embeds)
+                prompt_embeds = self.text_encoder.text_model.final_layer_norm(
+                    prompt_embeds
+                )
 
         if self.text_encoder is not None:
             prompt_embeds_dtype = self.text_encoder.dtype
@@ -408,7 +472,9 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         bs_embed, seq_len, _ = prompt_embeds.shape
         # duplicate text embeddings for each generation per prompt, using mps friendly method
         prompt_embeds = prompt_embeds.repeat(1, num_images_per_prompt, 1)
-        prompt_embeds = prompt_embeds.view(bs_embed * num_images_per_prompt, seq_len, -1)
+        prompt_embeds = prompt_embeds.view(
+            bs_embed * num_images_per_prompt, seq_len, -1
+        )
 
         # get unconditional embeddings for classifier free guidance
         if do_classifier_free_guidance and negative_prompt_embeds is None:
@@ -444,7 +510,10 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                 return_tensors="pt",
             )
 
-            if hasattr(self.text_encoder.config, "use_attention_mask") and self.text_encoder.config.use_attention_mask:
+            if (
+                hasattr(self.text_encoder.config, "use_attention_mask")
+                and self.text_encoder.config.use_attention_mask
+            ):
                 attention_mask = uncond_input.attention_mask.to(device)
             else:
                 attention_mask = None
@@ -459,17 +528,22 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             # duplicate unconditional embeddings for each generation per prompt, using mps friendly method
             seq_len = negative_prompt_embeds.shape[1]
 
-            negative_prompt_embeds = negative_prompt_embeds.to(dtype=prompt_embeds_dtype, device=device)
+            negative_prompt_embeds = negative_prompt_embeds.to(
+                dtype=prompt_embeds_dtype, device=device
+            )
 
-            negative_prompt_embeds = negative_prompt_embeds.repeat(1, num_images_per_prompt, 1)
-            negative_prompt_embeds = negative_prompt_embeds.view(batch_size * num_images_per_prompt, seq_len, -1)
+            negative_prompt_embeds = negative_prompt_embeds.repeat(
+                1, num_images_per_prompt, 1
+            )
+            negative_prompt_embeds = negative_prompt_embeds.view(
+                batch_size * num_images_per_prompt, seq_len, -1
+            )
 
         # if isinstance(self, LoraLoaderMixin) and USE_PEFT_BACKEND:
-            # Retrieve the original scale by scaling back the LoRA layers
-            # unscale_lora_layers(self.text_encoder, lora_scale)
+        # Retrieve the original scale by scaling back the LoRA layers
+        # unscale_lora_layers(self.text_encoder, lora_scale)
 
         return prompt_embeds, negative_prompt_embeds
-
 
     def get_w_embedding(self, w, embedding_dim=512, dtype=torch.float32):
         """
@@ -494,15 +568,14 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         assert emb.shape == (w.shape[0], embedding_dim)
         return emb
 
-
     def decode_latents(self, latents):
         video_length = latents.shape[2]
-        latents = 1 / self.vae.config.scaling_factor * latents # 0.18215 * latents
+        latents = 1 / self.vae.config.scaling_factor * latents  # 0.18215 * latents
         latents = rearrange(latents, "b c f h w -> (b f) c h w")
         # video = self.vae.decode(latents).sample
         video = []
         for frame_idx in tqdm(range(latents.shape[0])):
-            video.append(self.vae.decode(latents[frame_idx:frame_idx+1]).sample)
+            video.append(self.vae.decode(latents[frame_idx : frame_idx + 1]).sample)
         video = torch.cat(video)
         video = rearrange(video, "(b f) c h w -> b c f h w", f=video_length)
         video = (video / 2 + 0.5).clamp(0, 1)
@@ -516,46 +589,74 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         # eta corresponds to η in DDIM paper: https://arxiv.org/abs/2010.02502
         # and should be between [0, 1]
 
-        accepts_eta = "eta" in set(inspect.signature(self.scheduler.step).parameters.keys())
+        accepts_eta = "eta" in set(
+            inspect.signature(self.scheduler.step).parameters.keys()
+        )
         extra_step_kwargs = {}
         if accepts_eta:
             extra_step_kwargs["eta"] = eta
 
         # check if the scheduler accepts generator
-        accepts_generator = "generator" in set(inspect.signature(self.scheduler.step).parameters.keys())
+        accepts_generator = "generator" in set(
+            inspect.signature(self.scheduler.step).parameters.keys()
+        )
         if accepts_generator:
             extra_step_kwargs["generator"] = generator
         return extra_step_kwargs
 
-
     def check_inputs(self, prompt, height, width, callback_steps):
         if not isinstance(prompt, str) and not isinstance(prompt, list):
-            raise ValueError(f"`prompt` has to be of type `str` or `list` but is {type(prompt)}")
+            raise ValueError(
+                f"`prompt` has to be of type `str` or `list` but is {type(prompt)}"
+            )
 
         if height % 8 != 0 or width % 8 != 0:
-            raise ValueError(f"`height` and `width` have to be divisible by 8 but are {height} and {width}.")
+            raise ValueError(
+                f"`height` and `width` have to be divisible by 8 but are {height} and {width}."
+            )
 
         if (callback_steps is None) or (
-            callback_steps is not None and (not isinstance(callback_steps, int) or callback_steps <= 0)
+            callback_steps is not None
+            and (not isinstance(callback_steps, int) or callback_steps <= 0)
         ):
             raise ValueError(
                 f"`callback_steps` has to be a positive integer but is {callback_steps} of type"
                 f" {type(callback_steps)}."
             )
 
-    def prepare_latents(self, input_frames, batch_size, num_channels_latents, video_length, height, width, dtype, device, generator,
-                        latent_timestep, overlaps, strength, 
-                        latents=None,
-                        last_output_frame = None,
-                        use_lcm = False,
-                        ):
-        shape = (batch_size, num_channels_latents, video_length, height // self.vae_scale_factor, width // self.vae_scale_factor)
+    def prepare_latents(
+        self,
+        input_frames,
+        batch_size,
+        num_channels_latents,
+        video_length,
+        height,
+        width,
+        dtype,
+        device,
+        generator,
+        latent_timestep,
+        overlaps,
+        strength,
+        latents=None,
+        last_output_frame=None,
+        use_lcm=False,
+    ):
+        shape = (
+            batch_size,
+            num_channels_latents,
+            video_length,
+            height // self.vae_scale_factor,
+            width // self.vae_scale_factor,
+        )
 
-        latents = randn_tensor(shape, generator=generator, device=device, dtype=dtype) # torch.randn(shape, generator=generator, dtype=dtype)  #.to(device) , device=rand_device
+        latents = randn_tensor(
+            shape, generator=generator, device=device, dtype=dtype
+        )  # torch.randn(shape, generator=generator, dtype=dtype)  #.to(device) , device=rand_device
         self.latents = latents
 
         last_output_frame_latents = None
-        
+
         if overlaps > 0 or strength < 1 or use_lcm:
             frames_latents = []
 
@@ -563,7 +664,7 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             #     self.prev_frames_latents = self.frames_latents.clone()
 
             if input_frames is not None:
-                for i , frame in enumerate(input_frames):
+                for i, frame in enumerate(input_frames):
                     image = frame
                     image = self.image_processor.preprocess(image)
                     if not isinstance(image, (torch.Tensor, PIL.Image.Image, list)):
@@ -581,17 +682,17 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             #     latents = self.scheduler.add_noise(frames_latents_tensor, latents.to(device), latent_timestep)
 
             if last_output_frame is not None:
-                    image = last_output_frame
-                    image = self.image_processor.preprocess(image)
-                    if not isinstance(image, (torch.Tensor, PIL.Image.Image, list)):
-                        raise ValueError(
-                            f"`image` has to be of type `torch.Tensor`, `PIL.Image.Image` or list but is {type(image)}"
-                        )
-                    image = image.to(device=device, dtype=dtype)
-                    frame_latents = self.vae.encode(image).latent_dist.sample(generator)
-                    frame_latents = self.vae.config.scaling_factor * frame_latents
-                    last_output_frame_latents = frame_latents
-            
+                image = last_output_frame
+                image = self.image_processor.preprocess(image)
+                if not isinstance(image, (torch.Tensor, PIL.Image.Image, list)):
+                    raise ValueError(
+                        f"`image` has to be of type `torch.Tensor`, `PIL.Image.Image` or list but is {type(image)}"
+                    )
+                image = image.to(device=device, dtype=dtype)
+                frame_latents = self.vae.encode(image).latent_dist.sample(generator)
+                frame_latents = self.vae.config.scaling_factor * frame_latents
+                last_output_frame_latents = frame_latents
+
             self.frames_latents = frames_latents
 
             latents = latents.to(device)
@@ -605,25 +706,35 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             #         if overlaps > 0: #i >= overlaps and  np.sqrt(factor*0.5)*last_output_frame_latents + np.sqrt(1-factor*0.5)*
             #             latents[:, :, i, :, :] = self.scheduler.add_noise( np.sqrt(factor*0.5)*last_output_frame_latents + np.sqrt(1-factor*0.5)*frames_latents[i], latents[:, :, i, :, :].to(device), latent_timestep)
             if use_lcm:
-                frames_latents_tensor = torch.stack(frames_latents,dim=2)
-                latents = self.scheduler.add_noise(frames_latents_tensor, latents.to(device), latent_timestep)
+                frames_latents_tensor = torch.stack(frames_latents, dim=2)
+                latents = self.scheduler.add_noise(
+                    frames_latents_tensor, latents.to(device), latent_timestep
+                )
 
             elif last_output_frame is not None:
                 for i in range(video_length):
-                #     shape = frames_latents[i].shape
-                    
-                #     if overlaps > 0: 
-                        latents[:, :, i, :, :] = self.scheduler.add_noise(last_output_frame_latents, latents[:, :, i, :, :].to(device), latent_timestep)
+                    #     shape = frames_latents[i].shape
+
+                    #     if overlaps > 0:
+
+                    # 它这里直接用了 last image，然后加了随机噪声 ，对所有的图片
+                    # 这个看起来就是它 last_output_frame的最大作用
+
+                    latents[:, :, i, :, :] = self.scheduler.add_noise(
+                        last_output_frame_latents,
+                        latents[:, :, i, :, :].to(device),
+                        latent_timestep,
+                    )
+
+                    # 我比较感兴趣，这里加了噪音之后, latents到底是长啥样
+
                 # latents = self.scheduler.add_noise(last_output_frame_latents.repeat(1,1,video_length,1,1), latents.to(device), latent_timestep)
 
-
-
-        
         latents = latents.to(device)
 
         # scale the initial noise by the standard deviation required by the scheduler
         if strength >= 1 and overlaps == 0 and not use_lcm:
-            latents = latents * self.scheduler.init_noise_sigma 
+            latents = latents * self.scheduler.init_noise_sigma
 
         return latents
 
@@ -635,7 +746,6 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         timesteps = self.scheduler.timesteps[t_start * self.scheduler.order :]
 
         return timesteps, num_inference_steps - t_start
-
 
     @torch.no_grad()
     def __call__(
@@ -658,18 +768,22 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         callback: Optional[Callable[[int, int, torch.FloatTensor], None]] = None,
         callback_steps: Optional[int] = 1,
         overlaps: int = 0,
-        multicontrolnetresiduals_pipeline: Optional[MultiControlNetResidualsPipeline] = None,
-        multicontrolnetresiduals_overlap_pipeline: Optional[MultiControlNetResidualsPipeline] = None,
+        multicontrolnetresiduals_pipeline: Optional[
+            MultiControlNetResidualsPipeline
+        ] = None,
+        multicontrolnetresiduals_overlap_pipeline: Optional[
+            MultiControlNetResidualsPipeline
+        ] = None,
         num_images_per_prompt: Optional[int] = 1,
         clip_skip: Optional[int] = None,
         cross_attention_kwargs: Optional[Dict[str, Any]] = None,
         prompt_embeds: Optional[torch.FloatTensor] = None,
         negative_prompt_embeds: Optional[torch.FloatTensor] = None,
-        epoch = 0,
-        output_dir = 'tmp/output',
-        save_outputs = False,
-        last_output_frame = None,
-        use_lcm = True,
+        epoch=0,
+        output_dir="tmp/output",
+        save_outputs=False,
+        last_output_frame=None,
+        use_lcm=True,
         lcm_origin_steps: int = 50,
         **kwargs,
     ):
@@ -679,7 +793,6 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
 
         batch_size = 1
 
-
         device = self._execution_device
         # here `guidance_scale` is defined analog to the guidance weight `w` of equation (2)
         # of the Imagen paper: https://arxiv.org/pdf/2205.11487.pdf . `guidance_scale = 1`
@@ -688,7 +801,11 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
 
         # Encode input prompt
 
-        lora_scale = cross_attention_kwargs.get("scale", None) if cross_attention_kwargs is not None else None
+        lora_scale = (
+            cross_attention_kwargs.get("scale", None)
+            if cross_attention_kwargs is not None
+            else None
+        )
 
         prompt_embeds, negative_prompt_embeds = self.encode_prompt(
             prompt,
@@ -708,20 +825,25 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         if do_classifier_free_guidance:
             prompt_embeds = torch.cat([negative_prompt_embeds, prompt_embeds])
 
-
         # Prepare timesteps
         if use_lcm:
-            self.scheduler.set_timesteps(strength, num_inference_steps, lcm_origin_steps)
+            self.scheduler.set_timesteps(
+                strength, num_inference_steps, lcm_origin_steps
+            )
             # timesteps = self.scheduler.timesteps
         else:
-            self.scheduler.set_timesteps(num_inference_steps=num_inference_steps, device=device)
+            self.scheduler.set_timesteps(
+                num_inference_steps=num_inference_steps, device=device
+            )
 
-        if strength >= 1 or use_lcm: # LCM Steps are chosen based on Diffusers implementaion: https://github.com/huggingface/diffusers/blob/main/examples/community/latent_consistency_img2img.py
-            timesteps = self.scheduler.timesteps 
+        if (
+            strength >= 1 or use_lcm
+        ):  # LCM Steps are chosen based on Diffusers implementaion: https://github.com/huggingface/diffusers/blob/main/examples/community/latent_consistency_img2img.py
+            timesteps = self.scheduler.timesteps
         else:
-            timesteps, num_inference_steps = self.get_timesteps(num_inference_steps, strength, device)
-
-
+            timesteps, num_inference_steps = self.get_timesteps(
+                num_inference_steps, strength, device
+            )
 
         latent_timestep = timesteps[:1].repeat(batch_size)
         # Prepare latent variables
@@ -740,28 +862,27 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
             overlaps,
             strength,
             latents,
-            last_output_frame = last_output_frame,
-            use_lcm=use_lcm
+            last_output_frame=last_output_frame,
+            use_lcm=use_lcm,
         )
         latents_dtype = latents.dtype
-
 
         # 6. Get Guidance Scale Embedding
         bs = batch_size * num_images_per_prompt
         w = torch.tensor(guidance_scale).repeat(bs)
-        w_embedding = self.get_w_embedding(w, embedding_dim=256).to(device=device, dtype=latents.dtype)
-
+        w_embedding = self.get_w_embedding(w, embedding_dim=256).to(
+            device=device, dtype=latents.dtype
+        )
 
         # Prep controlnet images
         if multicontrolnetresiduals_pipeline is not None:
-            
-            multicontrolnetresiduals_pipeline.prep_control_images(input_frames,
-                                                                control_image_processor = self.control_image_processor,
-                                                                epoch = epoch,
-                                                                output_dir=output_dir,
-                                                                save_outputs= save_outputs,
-                                                                )
-
+            multicontrolnetresiduals_pipeline.prep_control_images(
+                input_frames,
+                control_image_processor=self.control_image_processor,
+                epoch=epoch,
+                output_dir=output_dir,
+                save_outputs=save_outputs,
+            )
 
         # Prepare extra step kwargs.
         extra_step_kwargs = self.prepare_extra_step_kwargs(generator, eta)
@@ -773,39 +894,54 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                 torch.cuda.empty_cache()
                 ts = torch.full((bs,), t, device=device, dtype=torch.long)
                 # expand the latents if we are doing classifier free guidance
-                latent_model_input = torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+                latent_model_input = (
+                    torch.cat([latents] * 2) if do_classifier_free_guidance else latents
+                )
 
                 # lcm_
 
-                latent_model_input = self.scheduler.scale_model_input(latent_model_input, t)
+                latent_model_input = self.scheduler.scale_model_input(
+                    latent_model_input, t
+                )
 
                 # print("DTYPE:", latent_model_input.dtype)
                 # print("LATELT SHAPE:", latent_model_input.shape)
 
                 down_block_additional_residuals = mid_block_additional_residual = None
-                
+
                 if multicontrolnetresiduals_pipeline is not None:
                     controlnet_overlaps = 0
 
-                    down_block_additional_residuals, mid_block_additional_residual = multicontrolnetresiduals_pipeline(
-                                    control_model_input = latent_model_input,
-                                    t = t,
-                                    controlnet_prompt_embeds = prompt_embeds, 
-                                    # cond_scale = [0.5] * len(multicontrolnetresiduals_pipeline.controlnets),
-                                    )
-                    
+                    (
+                        down_block_additional_residuals,
+                        mid_block_additional_residual,
+                    ) = multicontrolnetresiduals_pipeline(
+                        control_model_input=latent_model_input,
+                        t=t,
+                        controlnet_prompt_embeds=prompt_embeds,
+                        # cond_scale = [0.5] * len(multicontrolnetresiduals_pipeline.controlnets),
+                    )
+
                     # tuples are un-assinagnable so we first convert to lists and then convert back
-                    down_block_additional_residuals = list(down_block_additional_residuals) 
-                    
+                    down_block_additional_residuals = list(
+                        down_block_additional_residuals
+                    )
+
                     # Re-arranging the outputs of controlnet(s) to account for the frames
                     for i, tensor in enumerate(down_block_additional_residuals):
-                        down_block_additional_residuals[i] = rearrange(tensor, '(b f) c h w -> b c f h w', f = len(input_frames))
+                        down_block_additional_residuals[i] = rearrange(
+                            tensor, "(b f) c h w -> b c f h w", f=len(input_frames)
+                        )
 
-                
-                    mid_block_additional_residual = rearrange(mid_block_additional_residual, '(b f) c h w -> b c f h w', f = len(input_frames))
+                    mid_block_additional_residual = rearrange(
+                        mid_block_additional_residual,
+                        "(b f) c h w -> b c f h w",
+                        f=len(input_frames),
+                    )
 
-                    down_block_additional_residuals = tuple(down_block_additional_residuals)
-
+                    down_block_additional_residuals = tuple(
+                        down_block_additional_residuals
+                    )
 
                 if use_lcm:
                     # model prediction (v-prediction, eps, x)
@@ -817,30 +953,41 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
                         cross_attention_kwargs=cross_attention_kwargs,
                         return_dict=False,
                     )[0]
-                    latents, denoised = self.scheduler.step(model_pred, i, t, latents, return_dict=False)
+                    latents, denoised = self.scheduler.step(
+                        model_pred, i, t, latents, return_dict=False
+                    )
                 else:
                     # predict the noise residual
                     noise_pred = self.unet(
-                                        latent_model_input, 
-                                        t, 
-                                        down_block_additional_residuals = down_block_additional_residuals,
-                                        mid_block_additional_residual = mid_block_additional_residual,
-                                        encoder_hidden_states=prompt_embeds).sample.to(dtype=latents_dtype)
+                        latent_model_input,
+                        t,
+                        down_block_additional_residuals=down_block_additional_residuals,
+                        mid_block_additional_residual=mid_block_additional_residual,
+                        encoder_hidden_states=prompt_embeds,
+                    ).sample.to(dtype=latents_dtype)
 
                     # perform guidance
                     if do_classifier_free_guidance and not use_lcm:
                         noise_pred_uncond, noise_pred_text = noise_pred.chunk(2)
-                        noise_pred = noise_pred_uncond + guidance_scale * (noise_pred_text - noise_pred_uncond)
+                        noise_pred = noise_pred_uncond + guidance_scale * (
+                            noise_pred_text - noise_pred_uncond
+                        )
 
-                    latents[:,:,:,:,:] = self.scheduler.step(noise_pred[:,:,:,:,:], t, latents[:,:,:,:,:], **extra_step_kwargs).prev_sample
+                    latents[:, :, :, :, :] = self.scheduler.step(
+                        noise_pred[:, :, :, :, :],
+                        t,
+                        latents[:, :, :, :, :],
+                        **extra_step_kwargs,
+                    ).prev_sample
 
                 # call the callback, if provided
-                if i == len(timesteps) - 1 or ((i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0):
+                if i == len(timesteps) - 1 or (
+                    (i + 1) > num_warmup_steps and (i + 1) % self.scheduler.order == 0
+                ):
                     progress_bar.update()
                     if callback is not None and i % callback_steps == 0:
                         callback(i, t, latents)
 
-        
         # Post-processing
         if use_lcm:
             denoised = denoised.to(prompt_embeds.dtype)
@@ -858,12 +1005,10 @@ class ControlAnimationPipeline(DiffusionPipeline,  TextualInversionLoaderMixin,)
         return AnimationPipelineOutput(videos=video)
 
 
-
-
-
 #################################################################################################
 #################################################################################################
 # From Diffusers LCM custom (community) module:
+
 
 @dataclass
 # Copied from diffusers.schedulers.scheduling_ddpm.DDPMSchedulerOutput with DDPM->DDIM
@@ -957,9 +1102,6 @@ def rescale_zero_terminal_snr(betas):
     return betas
 
 
-
-
-
 class LCMScheduler(SchedulerMixin, ConfigMixin):
     """
     `LCMScheduler` extends the denoising procedure introduced in denoising diffusion probabilistic models (DDPMs) with
@@ -1035,17 +1177,27 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
         if trained_betas is not None:
             self.betas = torch.tensor(trained_betas, dtype=torch.float32)
         elif beta_schedule == "linear":
-            self.betas = torch.linspace(beta_start, beta_end, num_train_timesteps, dtype=torch.float32)
+            self.betas = torch.linspace(
+                beta_start, beta_end, num_train_timesteps, dtype=torch.float32
+            )
         elif beta_schedule == "scaled_linear":
             # this schedule is very specific to the latent diffusion model.
             self.betas = (
-                torch.linspace(beta_start**0.5, beta_end**0.5, num_train_timesteps, dtype=torch.float32) ** 2
+                torch.linspace(
+                    beta_start**0.5,
+                    beta_end**0.5,
+                    num_train_timesteps,
+                    dtype=torch.float32,
+                )
+                ** 2
             )
         elif beta_schedule == "squaredcos_cap_v2":
             # Glide cosine schedule
             self.betas = betas_for_alpha_bar(num_train_timesteps)
         else:
-            raise NotImplementedError(f"{beta_schedule} does is not implemented for {self.__class__}")
+            raise NotImplementedError(
+                f"{beta_schedule} does is not implemented for {self.__class__}"
+            )
 
         # Rescale for zero SNR
         if rescale_betas_zero_snr:
@@ -1058,16 +1210,22 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
         # For the final step, there is no previous alphas_cumprod because we are already at 0
         # `set_alpha_to_one` decides whether we set this parameter simply to one or
         # whether we use the final alpha of the "non-previous" one.
-        self.final_alpha_cumprod = torch.tensor(1.0) if set_alpha_to_one else self.alphas_cumprod[0]
+        self.final_alpha_cumprod = (
+            torch.tensor(1.0) if set_alpha_to_one else self.alphas_cumprod[0]
+        )
 
         # standard deviation of the initial noise distribution
         self.init_noise_sigma = 1.0
 
         # setable values
         self.num_inference_steps = None
-        self.timesteps = torch.from_numpy(np.arange(0, num_train_timesteps)[::-1].copy().astype(np.int64))
+        self.timesteps = torch.from_numpy(
+            np.arange(0, num_train_timesteps)[::-1].copy().astype(np.int64)
+        )
 
-    def scale_model_input(self, sample: torch.FloatTensor, timestep: Optional[int] = None) -> torch.FloatTensor:
+    def scale_model_input(
+        self, sample: torch.FloatTensor, timestep: Optional[int] = None
+    ) -> torch.FloatTensor:
         """
         Ensures interchangeability with schedulers that need to scale the denoising model input depending on the
         current timestep.
@@ -1084,11 +1242,17 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
 
     def _get_variance(self, timestep, prev_timestep):
         alpha_prod_t = self.alphas_cumprod[timestep]
-        alpha_prod_t_prev = self.alphas_cumprod[prev_timestep] if prev_timestep >= 0 else self.final_alpha_cumprod
+        alpha_prod_t_prev = (
+            self.alphas_cumprod[prev_timestep]
+            if prev_timestep >= 0
+            else self.final_alpha_cumprod
+        )
         beta_prod_t = 1 - alpha_prod_t
         beta_prod_t_prev = 1 - alpha_prod_t_prev
 
-        variance = (beta_prod_t_prev / beta_prod_t) * (1 - alpha_prod_t / alpha_prod_t_prev)
+        variance = (beta_prod_t_prev / beta_prod_t) * (
+            1 - alpha_prod_t / alpha_prod_t_prev
+        )
 
         return variance
 
@@ -1106,7 +1270,9 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
         batch_size, channels, height, width = sample.shape
 
         if dtype not in (torch.float32, torch.float64):
-            sample = sample.float()  # upcast for quantile calculation, and clamp not implemented for cpu half
+            sample = (
+                sample.float()
+            )  # upcast for quantile calculation, and clamp not implemented for cpu half
 
         # Flatten sample for doing quantile calculation along each image
         sample = sample.reshape(batch_size, channels * height * width)
@@ -1119,7 +1285,9 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
         )  # When clamped to min=1, equivalent to standard clipping to [-1, 1]
 
         s = s.unsqueeze(1)  # (batch_size, 1) because clamp will broadcast along dim=0
-        sample = torch.clamp(sample, -s, s) / s  # "we threshold xt0 to the range [-s, s] and then divide by s"
+        sample = (
+            torch.clamp(sample, -s, s) / s
+        )  # "we threshold xt0 to the range [-s, s] and then divide by s"
 
         sample = sample.reshape(batch_size, channels, height, width)
         sample = sample.to(dtype)
@@ -1127,7 +1295,11 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
         return sample
 
     def set_timesteps(
-        self, stength, num_inference_steps: int, lcm_origin_steps: int, device: Union[str, torch.device] = None
+        self,
+        stength,
+        num_inference_steps: int,
+        lcm_origin_steps: int,
+        device: Union[str, torch.device] = None,
     ):
         """
         Sets the discrete timesteps used for the diffusion chain (to be run before inference).
@@ -1151,7 +1323,9 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
             np.asarray(list(range(1, int(lcm_origin_steps * stength) + 1))) * c - 1
         )  # LCM Training  Steps Schedule
         skipping_step = len(lcm_origin_timesteps) // num_inference_steps
-        timesteps = lcm_origin_timesteps[::-skipping_step][:num_inference_steps]  # LCM Inference Steps Schedule
+        timesteps = lcm_origin_timesteps[::-skipping_step][
+            :num_inference_steps
+        ]  # LCM Inference Steps Schedule
 
         self.timesteps = torch.from_numpy(timesteps.copy()).to(device)
 
@@ -1218,7 +1392,11 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
 
         # 2. compute alphas, betas
         alpha_prod_t = self.alphas_cumprod[timestep]
-        alpha_prod_t_prev = self.alphas_cumprod[prev_timestep] if prev_timestep >= 0 else self.final_alpha_cumprod
+        alpha_prod_t_prev = (
+            self.alphas_cumprod[prev_timestep]
+            if prev_timestep >= 0
+            else self.final_alpha_cumprod
+        )
 
         beta_prod_t = 1 - alpha_prod_t
         beta_prod_t_prev = 1 - alpha_prod_t_prev
@@ -1245,7 +1423,9 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
         # Noise is not used for one-step sampling.
         if len(self.timesteps) > 1:
             noise = torch.randn(model_output.shape).to(model_output.device)
-            prev_sample = alpha_prod_t_prev.sqrt() * denoised + beta_prod_t_prev.sqrt() * noise
+            prev_sample = (
+                alpha_prod_t_prev.sqrt() * denoised + beta_prod_t_prev.sqrt() * noise
+            )
         else:
             prev_sample = denoised
 
@@ -1262,7 +1442,9 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
         timesteps: torch.IntTensor,
     ) -> torch.FloatTensor:
         # Make sure alphas_cumprod and timestep have same device and dtype as original_samples
-        alphas_cumprod = self.alphas_cumprod.to(device=original_samples.device, dtype=original_samples.dtype)
+        alphas_cumprod = self.alphas_cumprod.to(
+            device=original_samples.device, dtype=original_samples.dtype
+        )
         timesteps = timesteps.to(original_samples.device)
 
         sqrt_alpha_prod = alphas_cumprod[timesteps] ** 0.5
@@ -1275,15 +1457,22 @@ class LCMScheduler(SchedulerMixin, ConfigMixin):
         while len(sqrt_one_minus_alpha_prod.shape) < len(original_samples.shape):
             sqrt_one_minus_alpha_prod = sqrt_one_minus_alpha_prod.unsqueeze(-1)
 
-        noisy_samples = sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
+        noisy_samples = (
+            sqrt_alpha_prod * original_samples + sqrt_one_minus_alpha_prod * noise
+        )
         return noisy_samples
 
     # Copied from diffusers.schedulers.scheduling_ddpm.DDPMScheduler.get_velocity
     def get_velocity(
-        self, sample: torch.FloatTensor, noise: torch.FloatTensor, timesteps: torch.IntTensor
+        self,
+        sample: torch.FloatTensor,
+        noise: torch.FloatTensor,
+        timesteps: torch.IntTensor,
     ) -> torch.FloatTensor:
         # Make sure alphas_cumprod and timestep have same device and dtype as sample
-        alphas_cumprod = self.alphas_cumprod.to(device=sample.device, dtype=sample.dtype)
+        alphas_cumprod = self.alphas_cumprod.to(
+            device=sample.device, dtype=sample.dtype
+        )
         timesteps = timesteps.to(sample.device)
 
         sqrt_alpha_prod = alphas_cumprod[timesteps] ** 0.5

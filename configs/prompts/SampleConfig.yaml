@@ -39,7 +39,7 @@ pretrained_model_path: "models/StableDiffusion/stable-diffusion-v1-5"
 vae_path: "models/VAE/vae-ft-mse-840000-ema-pruned.ckpt" #"models/VAE/vae-ft-ema-560000-ema-pruned.safetensors"
 
 # Optional DreamBooth Model (full)
-dreambooth_path: "models/DreamBooth_LoRA/dreamshaper_8.safetensors" 
+# dreambooth_path: "models/DreamBooth_LoRA/dreamshaper_8.safetensors" 
 
 # Optional LoRA model to be used
 lora_model_path: "" #models/DreamBooth_LoRA/genshin_impact_yoimiya.safetensors
