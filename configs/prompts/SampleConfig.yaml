@@ -3,8 +3,8 @@
 ######################################################
 # INPUTS
 ######################################################
-input_video_path: "tmp/dance6_cropped2.mp4" # Path to the input video file
-output_video_dir: "tmp/output"  # Directory to save the outputs
+input_video_path: "/root/autodl-tmp/istockphoto-1592223420-640_adpp_isj.mp4" # Path to the input video file
+output_video_dir: "output"  # Directory to save the outputs
 
 save_frames: 1 # 0: No, 1: Yes
 
@@ -13,7 +13,7 @@ save_frames: 1 # 0: No, 1: Yes
 width: 512
 height: 768
 
-prompt: "A woman with perfect++ face++ (female villain)+, (perfect face)++, (perfect eyes)++ (plain bright golden room)+++ (muscle body)0.2, fully dressed, (gold pants)++ , (gold suit)++ (gold shirt)+ (golden clothes)++, (sharp features)+, (intense eyes)+, (commanding posture)+, (aura of malevolence and mystery)+, (phenomenal aesthetic)+, sumptuous artwork, breath of the wild, masterpiece, best quality, sharp focus, dramatic lighting, 8k, uhd, dslr, vivid color, cinematic lighting , matte painting , cinematic photo, realistic photo, body photo, walking forward, high quality"
+prompt: "A woman with perfect++ face++ (female villain)+, (perfect face)++, (perfect eyes)++ (plain bright golden room)+++ (muscle body)0.2, fully dressed, (gold pants)++ , (gold suit)++ (gold shirt)+ (golden clothes)++, (sharp features)+, (intense eyes)+, (commanding posture)+, (aura of malevolence and mystery)+, (phenomenal aesthetic)+, sumptuous artwork, breath of the wild, masterpiece, best quality, sharp focus, dramatic lighting, 8k, uhd, dslr, vivid color, cinematic lighting , matte painting ,  high quality"
 n_prompt: "easynegative+, nudity, tint, blue tint, blue, mask++, (bad face)+++, (worst quality)+, (low quality)+, lowres, bad anatomy, (monochrome)++, (grayscale)+, (text, font, logo, copyright, watermark)++, wrong face, wrong hands, wrong legs, wrong feet, (nsfw,nude)+"
 
 # Additional Basic Parameters
@@ -53,19 +53,19 @@ motion_module: "models/Motion_Module/mm_sd_v15_v2.ckpt"
 controlnets:
   - lllyasviel/control_v11p_sd15_openpose
   - lllyasviel/control_v11p_sd15_lineart
-  - lllyasviel/control_v11p_sd15_mlsd
+  # - lllyasviel/control_v11p_sd15_mlsd
   # - lllyasviel/sd-controlnet-canny
   # - lllyasviel/control_v11p_sd15_softedge
   # - lllyasviel/sd-controlnet-mlsd
   # - lllyasviel/sd-controlnet-openpose
   # - lllyasviel/control_v11p_sd15s2_lineart_anime
-  - lllyasviel/sd-controlnet-hed
+  # - lllyasviel/sd-controlnet-hed
 
 cond_scale: 
   - 1.0
   - 0.35
-  - 1.0
-  - 0.4
+  # - 1.0
+  # - 0.4
 
 
 ######################################################
@@ -73,7 +73,7 @@ cond_scale:
 ######################################################
 
 upscale: 2 # Upscaler value for the input image
-use_face_enhancer: 1 # 0: No, 1: Yes
+use_face_enhancer: 0 # 0: No, 1: Yes
 upscale_first: 1 # Upscale before applying face enhancement - better results but slower: 0: No, 1: Yes
 
 frame_count: 16 # How many co-related frames are produced by AnimateDiff - defaults to 16
@@ -90,7 +90,7 @@ scheduler:  "EulerDiscreteScheduler"
 
 
 fps: 15 # The framerate to sample the input video
-fps_ffmpeg: 30 # The framerate of the output video
+fps_ffmpeg: 25 # The framerate of the output video
 crf: 23 # A measure of quality - lower is better 
 
 
