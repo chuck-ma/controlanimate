@@ -3,7 +3,7 @@
 ######################################################
 # INPUTS
 ######################################################
-input_video_path: "/root/autodl-tmp/istockphoto-1592223420-640_adpp_isj.mp4" # Path to the input video file
+input_video_path: "/root/autodl-tmp/istockphoto-1592223420-640_adpp_is.mp4" # Path to the input video file
 output_video_dir: "output"  # Directory to save the outputs
 
 save_frames: 1 # 0: No, 1: Yes
