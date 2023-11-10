@@ -11,6 +11,12 @@
 ##############################################
 
 
+# 修改项:
+# 1. 配置文件
+# 2. animediff 的unet 增加 兼容代码 : config["mid_block_type"] = "UNetMidBlock3DCrossAttn"
+# 3. 输出时支持不存在 audio 路径
+
+
 import os
 import json
 import time
