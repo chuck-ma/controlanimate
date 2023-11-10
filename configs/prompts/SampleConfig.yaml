@@ -3,22 +3,24 @@
 ######################################################
 # INPUTS
 ######################################################
-input_video_path: "/root/autodl-tmp/istockphoto-1592223420-640_adpp_is.mp4" # Path to the input video file
+input_video_path: "/root/autodl-tmp/res.mp4" # Path to the input video file
 output_video_dir: "output"  # Directory to save the outputs
 
 save_frames: 1 # 0: No, 1: Yes
 
 # Width and Height of the Input and Output videos
 # If zero the input's video dimension will be used otherwise the input will be resized
+# 视频文件记得做一下预处理
+
 width: 512
-height: 768
+height: 512
 
 prompt: "A woman with perfect++ face++ (female villain)+, (perfect face)++, (perfect eyes)++ (plain bright golden room)+++ (muscle body)0.2, fully dressed, (sharp features)+, (intense eyes)+, (commanding posture)+, (aura of malevolence and mystery)+, (phenomenal aesthetic)+, sumptuous artwork, breath of the wild, masterpiece, best quality, sharp focus, dramatic lighting, 8k, uhd, dslr, vivid color, cinematic lighting , matte painting ,  high quality"
 n_prompt: "easynegative+, nudity, tint, blue tint, blue, mask++, (bad face)+++, (worst quality)+, (low quality)+, lowres, bad anatomy, (monochrome)++, (grayscale)+, (text, font, logo, copyright, watermark)++, wrong face, wrong hands, wrong legs, wrong feet, (nsfw,nude)+"
 
 # Additional Basic Parameters
-start_time: "00:00:01" # Time in HH:MM:SS format to start reading the input video
-end_time: "00:00:05" # Time in HH:MM:SS format to stop reading the input video
+start_time: "00:00:00" # Time in HH:MM:SS format to start reading the input video
+end_time: "00:00:03" # Time in HH:MM:SS format to stop reading the input video
 
 # Use the last frame of each AnimateDiff output sequence as reference for the next epoch using the following img2img strength
 overlap_strength: 0.92
@@ -63,7 +65,7 @@ controlnets:
 
 cond_scale: 
   - 1.0
-  - 0.35
+  - 0.5
   # - 1.0
   # - 0.4
 
